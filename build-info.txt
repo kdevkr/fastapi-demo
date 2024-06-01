@@ -1,0 +1,3 @@
+[build-info]
+VERSION = local
+BUILD_TIME = nightly
