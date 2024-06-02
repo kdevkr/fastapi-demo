@@ -1,4 +1,5 @@
 import configparser
+import logging.config
 from datetime import datetime
 
 import sentry_sdk
@@ -10,9 +11,11 @@ from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from exception_handlers import exception_handler, custom_http_exception_handler, validation_exception_handler
+from scheduler import scheduler
 from settings import settings
 
-from scheduler import scheduler
+logger = logging.getLogger(__name__)
+logging.config.fileConfig("conf/logging.conf", disable_existing_loggers=False)
 
 # build-info.txt 파일 읽기
 build_info = configparser.ConfigParser()
@@ -46,14 +49,19 @@ app.add_exception_handler(Exception, exception_handler)
 app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
+
 # Register an event for application startup
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Startup application.")
     scheduler.start()
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    logger.info("Shutdown application.")
     scheduler.shutdown()
+
 
 # API
 @app.get("/")
