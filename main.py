@@ -1,10 +1,12 @@
 import configparser
 from datetime import datetime
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from exception_handlers import exception_handler, custom_http_exception_handler, validation_exception_handler
@@ -17,6 +19,14 @@ build_info.read("build-info.txt")
 VERSION = build_info.get("build-info", "version", fallback="unknown")
 BUILD_TIME = build_info.get("build-info", "build_time", fallback="unknown")
 
+if settings.sentry_enable:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        enable_tracing=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
+
 # Application
 app = FastAPI(debug=settings.debug)
 start_time = datetime.utcnow()
@@ -25,6 +35,9 @@ start_time = datetime.utcnow()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
+
+if settings.sentry_enable:
+    app.add_middleware(SentryAsgiMiddleware)
 
 # Global Exception Handler
 app.add_exception_handler(Exception, exception_handler)
