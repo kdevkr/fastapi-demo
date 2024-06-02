@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     sentry_enable: bool = False
     sentry_dsn: Optional[str] = None
 
+    timezone: str = 'UTC'
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

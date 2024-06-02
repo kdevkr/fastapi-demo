@@ -12,6 +12,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from exception_handlers import exception_handler, custom_http_exception_handler, validation_exception_handler
 from settings import settings
 
+from scheduler import scheduler
+
 # build-info.txt 파일 읽기
 build_info = configparser.ConfigParser()
 build_info.read("build-info.txt")
@@ -44,6 +46,14 @@ app.add_exception_handler(Exception, exception_handler)
 app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
+# Register an event for application startup
+@app.on_event("startup")
+async def startup_event():
+    scheduler.start()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    scheduler.shutdown()
 
 # API
 @app.get("/")
