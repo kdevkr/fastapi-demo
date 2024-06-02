@@ -3,6 +3,8 @@ from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from exception_handlers import exception_handler, custom_http_exception_handler, validation_exception_handler
@@ -18,6 +20,11 @@ BUILD_TIME = build_info.get("build-info", "build_time", fallback="unknown")
 # Application
 app = FastAPI(debug=settings.debug)
 start_time = datetime.utcnow()
+
+# Middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"],
+                   allow_headers=["*"])
 
 # Global Exception Handler
 app.add_exception_handler(Exception, exception_handler)
